@@ -57,7 +57,13 @@ public class EmergencyRouteFinderUI extends JFrame {
     private Point serviceCenterLocation;
     private List<Emergency> emergencies;
     private Emergency selectedEmergency;
-    
+
+ // New animation-related state
+    private List<Node> currentPath;
+    private int pathIndex;
+    private javax.swing.Timer animationTimer;
+    private Node currentAmbulancePosition;
+
     /**
      * Constructor
      */
@@ -113,6 +119,12 @@ public class EmergencyRouteFinderUI extends JFrame {
                     if (selectedEmergency != null) {
                         g.setColor(Color.CYAN);
                         g.drawOval(selectedEmergency.getX() - 12, selectedEmergency.getY() - 12, 24, 24);
+                    }
+                    
+                    //Draw animated ambulance if moving
+                    if (currentAmbulancePosition != null) {
+                        g.setColor(Color.MAGENTA);
+                        g.fillOval(currentAmbulancePosition.getX() - 4, currentAmbulancePosition.getY() - 4, 8, 8);
                     }
                 }
             }
@@ -299,13 +311,28 @@ public class EmergencyRouteFinderUI extends JFrame {
                 
                 if (path != null && !path.isEmpty()) {
                     log("Path found with " + path.size() + " nodes.");
+
+                //Start animated ambulance dispatch
+                currentPath = path;
+                pathIndex = 0;
+
+                animationTimer = new javax.swing.Timer(20, new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        if (pathIndex < currentPath.size()) {
+                            currentAmbulancePosition = currentPath.get(pathIndex);
+                            pathIndex++;
+                            repaintImagePanel();
+                        } else {
+                            animationTimer.stop();
+                            currentAmbulancePosition = null;
+                            selectedEmergency.setResolved(true);
+                            log("Emergency resolved!");
+                        }
+                    }
+                });
+                animationTimer.start(); 
                     
-                    // Visualize the path
-                    displayImage = imageProcessor.visualizePath(path, selectedEmergency.getColor());
-                    
-                    // Mark emergency as resolved
-                    selectedEmergency.setResolved(true);
-                    log("Emergency resolved!");
                 } else {
                     log("No path found between service center and emergency!");
                 }
