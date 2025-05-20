@@ -32,8 +32,6 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.util.Timer;//update
-import java.util.TimerTask;//update
 
 /**
  * Main application UI for the Emergency Service Route Finder
@@ -59,18 +57,7 @@ public class EmergencyRouteFinderUI extends JFrame {
     private Point serviceCenterLocation;
     private List<Emergency> emergencies;
     private Emergency selectedEmergency;
-
-    // New animation-related state
-    private List<Node> currentPath;
-    private int pathIndex;
-    private javax.swing.Timer animationTimer;
-    private Node currentAmbulancePosition;
-
-    //update
-    private List<Point> blockedRoads = new ArrayList<>();
-    private JButton returnButton;
-    private JRadioButton blockRoadRadio;
-
+    
     /**
      * Constructor
      */
@@ -127,12 +114,6 @@ public class EmergencyRouteFinderUI extends JFrame {
                         g.setColor(Color.CYAN);
                         g.drawOval(selectedEmergency.getX() - 12, selectedEmergency.getY() - 12, 24, 24);
                     }
-                    
-                    //Draw animated ambulance if moving
-                    if (currentAmbulancePosition != null) {
-                        g.setColor(Color.MAGENTA);
-                        g.fillOval(currentAmbulancePosition.getX() - 4, currentAmbulancePosition.getY() - 4, 8, 8);
-                    }
                 }
             }
         };
@@ -188,31 +169,11 @@ public class EmergencyRouteFinderUI extends JFrame {
                 clearAll();
             }
         });
-
-        //update
-        returnButton = new JButton("Return to Station");
-        returnButton.addActionListener(e -> {
-            if (serviceCenterLocation != null && currentAmbulancePosition != null) {
-                List<Node> returnPath = imageProcessor.findPath(
-                   currentAmbulancePosition.getX(),
-                   currentAmbulancePosition.getY(),
-                   serviceCenterLocation.x,
-                   serviceCenterLocation.y,
-                   ImageProcessor.EmergencyType.STANDARD
-               );
-               if (returnPath != null) {
-                   animatePath(returnPath, "Returning to station...");
-               } else {
-                   log("No path back to service center.");
-               }
-           }
-        });
-
+        
         buttonsPanel.add(loadImageButton);
         buttonsPanel.add(processImageButton);
         buttonsPanel.add(visualizeGraphButton);
         buttonsPanel.add(clearButton);
-        buttonsPanel.add(returnButton);//update
         
         // Create interaction mode panel
         JPanel modePanel = new JPanel();
@@ -223,17 +184,14 @@ public class EmergencyRouteFinderUI extends JFrame {
         addServiceCenterRadio = new JRadioButton("Add Service Center", true);
         addEmergencyRadio = new JRadioButton("Add Emergency");
         resolveEmergencyRadio = new JRadioButton("Resolve Emergency");
-        blockRoadRadio = new JRadioButton("Block Road");//update
         
         modeGroup.add(addServiceCenterRadio);
         modeGroup.add(addEmergencyRadio);
         modeGroup.add(resolveEmergencyRadio);
-        modeGroup.add(blockRoadRadio);//update
         
         modePanel.add(addServiceCenterRadio);
         modePanel.add(addEmergencyRadio);
         modePanel.add(resolveEmergencyRadio);
-        modePanel.add(blockRoadRadio);//update
         
         // Create emergency type selection
         JPanel emergencyTypePanel = new JPanel();
@@ -317,14 +275,7 @@ public class EmergencyRouteFinderUI extends JFrame {
                 log("Added " + emergency);
                 repaintImagePanel();
             }
-            //update
-        } else if (blockRoadRadio.isSelected()) {
-            if (isValidRoadPixel(x, y)) {
-                imageProcessor.blockPixel(x, y);
-                blockedRoads.add(new Point(x, y));
-                log("Blocked road at (" + x + ", " + y + ")");
-                repaintImagePanel();
-            }
+            
         } else if (resolveEmergencyRadio.isSelected()) {
             // Find nearest unresolved emergency
             selectedEmergency = findNearestEmergency(x, y);
@@ -348,28 +299,13 @@ public class EmergencyRouteFinderUI extends JFrame {
                 
                 if (path != null && !path.isEmpty()) {
                     log("Path found with " + path.size() + " nodes.");
-
-                //Start animated ambulance dispatch
-                currentPath = path;
-                pathIndex = 0;
-
-                animationTimer = new javax.swing.Timer(20, new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        if (pathIndex < currentPath.size()) {
-                            currentAmbulancePosition = currentPath.get(pathIndex);
-                            pathIndex++;
-                            repaintImagePanel();
-                        } else {
-                            animationTimer.stop();
-                            currentAmbulancePosition = null;
-                            selectedEmergency.setResolved(true);
-                            log("Emergency resolved!");
-                        }
-                    }
-                });
-                animationTimer.start(); 
                     
+                    // Visualize the path
+                    displayImage = imageProcessor.visualizePath(path, selectedEmergency.getColor());
+                    
+                    // Mark emergency as resolved
+                    selectedEmergency.setResolved(true);
+                    log("Emergency resolved!");
                 } else {
                     log("No path found between service center and emergency!");
                 }

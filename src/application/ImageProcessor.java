@@ -28,8 +28,7 @@ public class ImageProcessor {
     private int[][] pixelMap;
     private static final int ROAD_COLOR_THRESHOLD = 200; // Threshold for detecting roads (light colors)
     private static final int OBSTACLE_COLOR = 0; // Black represents obstacles
-    private boolean[][] isBlocked;//update
-
+    
     // Emergency types
     public enum EmergencyType {
         URGENT,    // Critical emergency - use A* algorithm
@@ -77,8 +76,7 @@ public class ImageProcessor {
         int width = originalImage.getWidth();
         int height = originalImage.getHeight();
         pixelMap = new int[width][height];
-        isBlocked = new boolean[width][height];//update
-
+        
         // Create a pixel map where:
         // - 0 represents obstacles (buildings, etc.)
         // - 1 represents passable roads
@@ -185,7 +183,7 @@ public class ImageProcessor {
         if (x < 0 || x >= pixelMap.length || y < 0 || y >= pixelMap[0].length) {
             return false;
         }
-        return pixelMap[x][y] == 1 && !isBlocked[x][y];//update
+        return pixelMap[x][y] == 1;
     }
     
     /**
@@ -503,18 +501,4 @@ public class ImageProcessor {
         
         return resultImage;
     }
-    /**
- * Mark a pixel as blocked and update the graph
- * @param x X coordinate
- * @param y Y coordinate
- *update
- */
-public void blockPixel(int x, int y) {
-    if (x >= 0 && x < isBlocked.length && y >= 0 && y < isBlocked[0].length) {
-        isBlocked[x][y] = true;
-        pixelMap[x][y] = 0; // treat it as an obstacle now
-        createGraph(); // regenerate graph without this node
-    }
-}
-    
 }
