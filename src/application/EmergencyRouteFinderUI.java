@@ -296,7 +296,7 @@ public class EmergencyRouteFinderUI extends JFrame {
             log("Selected point (" + x + ", " + y + ") is not a valid road location.");
             return;
         }
-        //update
+        
         if (addServiceCenterRadio.isSelected()) {
             // Add service center
             serviceCenterLocation = point;
@@ -317,7 +317,7 @@ public class EmergencyRouteFinderUI extends JFrame {
                 log("Added " + emergency);
                 repaintImagePanel();
             }
-            
+            //update
         } else if (blockRoadRadio.isSelected()) {
             if (isValidRoadPixel(x, y)) {
                 imageProcessor.blockPixel(x, y);
